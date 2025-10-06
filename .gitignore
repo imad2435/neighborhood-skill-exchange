@@ -1,0 +1,18 @@
+# .gitignore in the root directory
+
+# Dependencies
+frontend/node_modules/
+backend/node_modules/
+
+# Environment variables
+backend/.env
+
+# Build folders
+frontend/build/
+
+# Log files
+*.log
+
+# OS-specific files
+.DS_Store
+Thumbs.db
