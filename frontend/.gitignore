@@ -7,18 +7,40 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Dependency directories
+node_modules/
+node_modules_old/
+
+# Build output
+dist/
+build/
+dist-ssr/
+
+# Local environment files
 *.local
+.env
+.env.*.local
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# System-specific files
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Optional: OS trash/recycle bin
+$RECYCLE.BIN/
+
+# Optional: lock files from package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
