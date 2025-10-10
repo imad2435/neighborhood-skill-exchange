@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import RoleSwitcher from "../features/profile/components/RoleSwitcher";
 
-import { fetchProfile } from "../features/profile/profileSlice";
+import { fetchProfile } from "../redux/profileSlice";
 
 import { Camera } from "lucide-react";
 

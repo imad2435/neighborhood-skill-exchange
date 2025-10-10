@@ -1,6 +1,6 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setRole } from "../profileSlice";
+import { setRole } from "/src/redux/profileSlice";
 
 const RoleSwitcher = () => {
   const dispatch = useDispatch();

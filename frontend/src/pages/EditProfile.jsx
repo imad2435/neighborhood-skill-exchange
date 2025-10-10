@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import ProfileForm from "../features/profile/components/ProfileForm";
 
-import { saveProfile, uploadPortfolio } from "../features/profile/profileSlice";
+import { saveProfile, uploadPortfolio } from "../redux/profileSlice";
 
 
 const EditProfile = () => {

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { profileApi } from "./api/profileApi";
+import { profileApi } from "../api/profileApi";
 
 const savedProfile = JSON.parse(localStorage.getItem("userProfile"));
 
