@@ -31,52 +31,77 @@ const ProfileForm = ({ user, onSave, onUploadPortfolio }) => {
     >
       <h2 className="text-xl font-semibold text-purple-700">Edit Profile</h2>
 
+      {/* Basic Info */}
       <div className="grid sm:grid-cols-2 gap-4">
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          placeholder="Full Name"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
-        />
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="Email"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1">
+            Full Name
+          </label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name || ""}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1">
+            Email
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email || ""}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+          />
+        </div>
       </div>
 
+      {/* Provider-specific Fields */}
       {user.role === "provider" && (
         <>
           <div className="grid sm:grid-cols-3 gap-4">
-            <input
-              type="number"
-              name="hourlyRate"
-              value={formData.hourlyRate}
-              onChange={handleChange}
-              placeholder="Hourly Rate"
-              className="p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
-            />
-            <input
-              type="number"
-              name="dailyRate"
-              value={formData.dailyRate}
-              onChange={handleChange}
-              placeholder="Daily Rate"
-              className="p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
-            />
-            <input
-              type="text"
-              name="availability"
-              value={formData.availability}
-              onChange={handleChange}
-              placeholder="Availability"
-              className="p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Hourly Rate
+              </label>
+              <input
+                type="number"
+                name="hourlyRate"
+                value={formData.hourlyRate || ""}
+                onChange={handleChange}
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Daily Rate
+              </label>
+              <input
+                type="number"
+                name="dailyRate"
+                value={formData.dailyRate || ""}
+                onChange={handleChange}
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">
+                Availability
+              </label>
+              <input
+                type="text"
+                name="availability"
+                value={formData.availability || ""}
+                onChange={handleChange}
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+              />
+            </div>
           </div>
 
           <div>
@@ -93,17 +118,23 @@ const ProfileForm = ({ user, onSave, onUploadPortfolio }) => {
         </>
       )}
 
+      {/* Seeker-specific Fields */}
       {user.role === "seeker" && (
-        <input
-          type="text"
-          name="phone"
-          value={formData.phone}
-          onChange={handleChange}
-          placeholder="Contact Number"
-          className="p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-600 mb-1">
+            Contact Number
+          </label>
+          <input
+            type="text"
+            name="phone"
+            value={formData.phone || ""}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-400 outline-none"
+          />
+        </div>
       )}
 
+      {/* Save Button */}
       <div className="flex justify-end gap-3 pt-6">
         <button
           type="submit"
