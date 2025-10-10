@@ -1,11 +1,12 @@
 import React, { useRef, useState } from "react";
 import { useEffect } from "react";
-import { fetchProfile } from "@/features/profile/profileSlice";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
-import RoleSwitcher from "@/features/profile/components/RoleSwitcher";
-import { updateAvatar } from "@/features/profile/profileSlice";
+import RoleSwitcher from "../features/profile/components/RoleSwitcher";
+
+import { fetchProfile } from "../features/profile/profileSlice";
+
 import { Camera } from "lucide-react";
 
 const Profile = () => {

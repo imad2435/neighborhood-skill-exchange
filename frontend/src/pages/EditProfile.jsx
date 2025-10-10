@@ -2,8 +2,10 @@ import React from "react";
 import { motion } from "framer-motion";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import ProfileForm from "@/features/profile/components/ProfileForm";
-import { saveProfile, uploadPortfolio } from "@/features/profile/profileSlice";
+import ProfileForm from "../features/profile/components/ProfileForm";
+
+import { saveProfile, uploadPortfolio } from "../features/profile/profileSlice";
+
 
 const EditProfile = () => {
   const { user } = useSelector((state) => state.profile);
