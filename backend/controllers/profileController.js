@@ -67,14 +67,34 @@ const createOrUpdateProfile = async (req, res) => {
 };
 const getAllProfiles = async (req, res) => {
   try {
-    const profiles = await Profile.find().populate('user', ['name', 'email']);
+    // 1. Create a filter object to build our query dynamically
+    const filter = {};
+
+    // 2. Check for a 'skill' query parameter
+    if (req.query.skill) {
+      // If a skill is provided, add it to our filter.
+      // We'll search for this skill within the 'skills' array of the profile.
+      // The '$options: i' makes the search case-insensitive.
+      filter.skills = { $regex: req.query.skill, $options: 'i' };
+    }
+
+    // 3. Check for a 'location' query parameter
+    if (req.query.location) {
+      // If a location is provided, add it to our filter.
+      filter.location = { $regex: req.query.location, $options: 'i' };
+    }
+
+    // 4. Execute the query using the filter object.
+    // If no query params were provided, the filter object will be empty ({}),
+    // and `Profile.find({})` correctly returns ALL profiles.
+    const profiles = await Profile.find(filter).populate('user', ['name', 'email']);
+
     res.status(200).json(profiles);
   } catch (error) {
     console.error(error.message);
     res.status(500).send('Server Error');
   }
 };
-
 
 // @desc    Get profile by user ID
 // @route   GET /api/profiles/user/:user_id
@@ -100,10 +120,10 @@ const getProfileByUserId = async (req, res) => {
   }
 };
 
-
+// --- MAKE SURE THE EXPORTS ARE STILL CORRECT ---
 module.exports = {
   getMyProfile,
   createOrUpdateProfile,
-  getAllProfiles,       // <-- Add this
-  getProfileByUserId,   // <-- And this
+  getAllProfiles,       // This is the function we just replaced
+  getProfileByUserId,
 };
