@@ -1,7 +1,7 @@
 // backend/routes/bookingRoutes.js
 const express = require('express');
 const router = express.Router();
-const { createBooking, getMyBookings } = require('../controllers/bookingController');
+const { createBooking, getMyBookings, updateBookingStatus } = require('../controllers/bookingController');
 const { protect } = require('../middleware/authMiddleware');
 
 // All booking routes are protected
@@ -12,5 +12,7 @@ router.get('/mybookings', getMyBookings);
 
 // POST /api/bookings/:providerId - Create a new booking with a specific provider
 router.post('/:providerId', createBooking);
+
+router.patch('/:id', updateBookingStatus);
 
 module.exports = router;
