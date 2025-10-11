@@ -63,8 +63,36 @@ const getMyBookings = async (req, res) => {
     res.status(500).send('Server Error');
   }
 };
+const updateBookingStatus = async (req, res) => {
+  const { status } = req.body;
+  const bookingId = req.params.id;
+  const providerId = req.user.id; // The logged-in user MUST be the provider
+
+  try {
+    const booking = await Booking.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // SECURITY CHECK: Ensure the user updating the booking is the actual provider
+    if (booking.serviceProvider.toString() !== providerId) {
+      return res.status(401).json({ message: 'User not authorized to update this booking' });
+    }
+
+    // Update the status and save the document
+    booking.status = status;
+    const updatedBooking = await booking.save();
+
+    res.status(200).json(updatedBooking);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server Error');
+  }
+};
 
 module.exports = {
   createBooking,
   getMyBookings,
+  updateBookingStatus, // <-- Make sure to export the new function
 };
