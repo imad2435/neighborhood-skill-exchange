@@ -6,6 +6,7 @@ const connectDB = require('./config/db');
 const userRoutes = require('./routes/userRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 // Load env vars
 dotenv.config();
@@ -23,6 +24,7 @@ app.use(cors());         // To allow cross-origin requests
 app.use('/api/users', userRoutes);
 app.use('/api/profiles', profileRoutes); 
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // A simple welcome route
 app.get('/', (req, res) => {
