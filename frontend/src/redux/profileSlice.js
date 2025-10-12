@@ -6,9 +6,9 @@ const savedProfile = JSON.parse(localStorage.getItem("userProfile"));
 // ---- Async Actions ----
 export const fetchProfile = createAsyncThunk(
   "profile/fetchProfile",
-  async (userId, { rejectWithValue }) => {
+  async (token, { rejectWithValue }) => {
     try {
-      const data = await profileApi.fetchProfile(userId);
+      const data = await profileApi.fetchProfile(token);
       return data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -18,9 +18,9 @@ export const fetchProfile = createAsyncThunk(
 
 export const saveProfile = createAsyncThunk(
   "profile/saveProfile",
-  async (profileData, { rejectWithValue }) => {
+  async ({ profileData, token }, { rejectWithValue }) => {
     try {
-      const data = await profileApi.updateProfile(profileData);
+      const data = await profileApi.updateProfile(profileData, token);
       localStorage.setItem("userProfile", JSON.stringify(data));
       return data;
     } catch (error) {

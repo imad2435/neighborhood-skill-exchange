@@ -21,8 +21,12 @@ const Profile = () => {
 
   
 useEffect(() => {
-  dispatch(fetchProfile("currentUserId")); // replace with actual userId later
+  const token = localStorage.getItem("token");
+  if (token) {
+    dispatch(fetchProfile(token));
+  }
 }, [dispatch]);
+
 
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];

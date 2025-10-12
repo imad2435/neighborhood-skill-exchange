@@ -13,7 +13,8 @@ const EditProfile = () => {
   const navigate = useNavigate();
 
   const handleSave = (updatedData) => {
-     dispatch(saveProfile(updatedData));
+  const token = localStorage.getItem("token");
+  dispatch(saveProfile({ profileData: updatedData, token }));
   navigate("/profile");
 };
 
