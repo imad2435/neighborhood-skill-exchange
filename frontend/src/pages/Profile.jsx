@@ -1,195 +1,103 @@
-import React, { useRef, useState } from "react";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useSelector, useDispatch } from "react-redux";
-import RoleSwitcher from "../features/profile/components/RoleSwitcher";
+// frontend/src/pages/Profile.jsx
 
-import { fetchProfile } from "../redux/profileSlice";
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import profileApi from '../api/profileApi'; // We'll use this
 
-import { Camera } from "lucide-react";
-
-const Profile = () => {
-  const { user } = useSelector((state) => state.profile);
-  const dispatch = useDispatch();
-  const fileInputRef = useRef(null);
+const ProfilePage = () => {
+  const { user } = useAuth(); // Get the basic user info (name, email, role) from context
   const navigate = useNavigate();
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const handleEditProfile = () => {
-    navigate("/edit-profile");  
-  };
 
-  
-useEffect(() => {
-  dispatch(fetchProfile("currentUserId")); // replace with actual userId later
-}, [dispatch]);
+  const [profile, setProfile] = useState(null); // This will hold the detailed provider profile
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      dispatch(updateAvatar(imageUrl));
+  useEffect(() => {
+    // Only try to fetch a professional profile if the user is a provider
+    if (user?.role === 'provider') {
+      const fetchProviderProfile = async () => {
+        try {
+          const data = await profileApi.getMyProfile();
+          setProfile(data);
+        } catch (err) {
+          // If a 404 happens, it means they are a provider but haven't created a profile yet
+          if (err.response && err.response.status === 404) {
+            setProfile(null); // Explicitly set profile to null
+          } else {
+            setError('Failed to load your profile.');
+          }
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchProviderProfile();
+    } else {
+      // If the user is a seeker, we don't need to fetch anything else.
+      setLoading(false);
     }
-  };
+  }, [user]);
 
+  if (loading) {
+    return <div className="text-center p-10">Loading profile...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center p-10 text-red-500">{error}</div>;
+  }
+
+  // --- RENDER DIFFERENT UI BASED ON ROLE ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-white to-purple-50 py-10 px-6 flex justify-center">
-      <div className="w-full max-w-3xl">
-        <h1 className="text-3xl font-bold text-purple-700 mb-6">My Profile</h1>
-
-        {/* Role Switcher */}
-        <div className="flex justify-end mb-4">
-          <RoleSwitcher />
-        </div>
-
-        {/* Profile Card */}
-        <motion.div
-          className="bg-white rounded-2xl shadow-md p-8 relative"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          {/* Avatar */}
-          <div className="flex items-center space-x-6 mb-6">
-            <div className="relative">
-              <img
-                src={user.avatar}
-                alt="Profile avatar"
-                className="w-24 h-24 rounded-full border-4 border-purple-200 object-cover"
-              />
-              <button
-                onClick={() => fileInputRef.current.click()}
-                className="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full shadow-md hover:bg-purple-700 transition"
-              >
-                <Camera className="w-4 h-4" />
-              </button>
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleAvatarChange}
-              />
-            </div>
-
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800">{user.name}</h2>
-              <p className="text-gray-500">{user.email}</p>
-              <div className="flex space-x-2 mt-2">
-                <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full capitalize">
-                  {user.role}
-                </span>
-                {user.verified && (
-                  <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">
-                    Verified
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <hr className="my-4 border-gray-200" />
-
-          {/* Role-based UI */}
-          {user.role === "provider" && (
-            <>
-              <div className="space-y-2">
-                <p>
-                  <strong>Hourly Rate:</strong> {user.hourlyRate}
-                </p>
-                <p>
-                  <strong>Daily Rate:</strong> {user.dailyRate}
-                </p>
-                <p>
-                  <strong>Availability:</strong> {user.availability}
-                </p>
-              </div>
-
-              <div className="mt-6">
-                <h3 className="font-semibold text-purple-600 mb-2">Portfolio</h3>
-                {user.portfolio.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No portfolio items yet.</p>
-                ) : (
-                  <ul className="list-disc pl-5 text-gray-700 text-sm">
-                    {user.portfolio.map((item, i) => (
-                      <li key={i}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </>
-          )}
-
-          {user.role === "seeker" && (
-            <div className="text-left my-4">
-              <p className="text-gray-600">
-                <strong>Contact Number:</strong>{" "}
-                <span className="text-purple-700">+92 300 1234567</span>
-              </p>
-            </div>
-          )}
-
-          {user.role === "admin" && (
-            <div className="text-center my-6">
-              <p className="text-gray-600 mb-4">
-                Access all system management features below.
-              </p>
-              <button className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg shadow">
-                Go to Admin Dashboard
-              </button>
-            </div>
-          )}
-
-          <hr className="my-6 border-gray-200" />
-
-          {/* Buttons */}
-          <div className="flex space-x-4">
-            <button  onClick={handleEditProfile} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow">
-              Edit Profile
-            </button>
-            <button
-              onClick={() => setShowPasswordForm(!showPasswordForm)}
-              className="border border-purple-600 text-purple-700 hover:bg-purple-50 px-4 py-2 rounded-lg shadow"
-            >
-              Change Password
-            </button>
-          </div>
-
-          {/* Inline Password Form */}
-          {showPasswordForm && (
-            <div className="mt-6 p-4 bg-purple-50 rounded-lg">
-              <h4 className="font-semibold text-purple-700 mb-3">
-                Change Password
-              </h4>
-              <form className="space-y-3">
-                <input
-                  type="password"
-                  placeholder="Current Password"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                />
-                <input
-                  type="password"
-                  placeholder="New Password"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                />
-                <input
-                  type="password"
-                  placeholder="Confirm New Password"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                />
-                <button
-                  type="submit"
-                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
-                >
-                  Update Password
-                </button>
-              </form>
-            </div>
-          )}
-        </motion.div>
+    <div className="container mx-auto p-4 md:p-8">
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">My Profile</h1>
+      
+      {/* Basic User Info (for everyone) */}
+      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 mb-8">
+        <h2 className="text-xl font-semibold text-gray-800">{user?.name}</h2>
+        <p className="text-gray-600">{user?.email}</p>
+        <span className="mt-2 inline-block bg-gray-200 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded-full capitalize">
+          {user?.role}
+        </span>
       </div>
+
+      {/* Provider-Specific Section */}
+      {user?.role === 'provider' && (
+        <>
+          {profile ? (
+            // If profile exists, show it
+            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+              <h3 className="text-lg font-semibold text-purple-700 mb-2">Provider Details</h3>
+              <p><strong>Headline:</strong> {profile.headline}</p>
+              <p><strong>Location:</strong> {profile.location}</p>
+              <p><strong>Rate:</strong> {profile.rate}</p>
+              <div className="mt-4">
+                <strong>Skills:</strong>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {profile.skills.map((skill, index) => <span key={index} className="...">{skill}</span>)}
+                </div>
+              </div>
+              <button onClick={() => navigate('/edit-profile')} className="mt-6 ...">Edit Provider Profile</button>
+            </div>
+          ) : (
+            // If user is a provider but has NO profile yet
+            <div className="bg-yellow-100 text-yellow-800 p-4 rounded-lg">
+              <p className="font-semibold">Your provider profile is not complete!</p>
+              <p>Please add your skills and location to appear in search results.</p>
+              <button onClick={() => navigate('/edit-profile')} className="mt-4 ...">Complete Profile Now</button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Seeker-Specific Section */}
+      {user?.role === 'seeker' && (
+         <div className="bg-blue-100 text-blue-800 p-4 rounded-lg">
+            <p>Ready to find help? Browse our list of skilled providers.</p>
+            <button onClick={() => navigate('/providers')} className="mt-4 ...">Find Providers</button>
+         </div>
+      )}
     </div>
   );
 };
 
-export default Profile;
+export default ProfilePage;
