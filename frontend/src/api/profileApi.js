@@ -1,40 +1,36 @@
+// frontend/src/api/profileApi.js
+import apiClient from './apiClient';
 
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
-export const profileApi = {
-  async fetchProfile(userId) {
-    // replace with: await fetch(`${API_BASE_URL}/users/${userId}`)
-    return Promise.resolve({
-      name: "Alex Johnson",
-      email: "alex@example.com",
-      role: "provider",
-      verified: true,
-      hourlyRate: 25,
-      dailyRate: 150,
-      availability: "Weekdays 9am–6pm",
-      portfolio: [],
-      avatar: "https://ui-avatars.com/api/?name=Alex+Johnson&background=8b5cf6&color=fff",
-    });
-  },
-
-  async updateProfile(data) {
-    // POST or PATCH request later
-    console.log("Mock updateProfile:", data);
-    return Promise.resolve(data);
-  },
-
-  async uploadPortfolioItem(fileData) {
-    console.log("Mock uploadPortfolio:", fileData);
-    // In real backend, upload file to server here
-    return Promise.resolve({
-      id: Date.now(),
-      url: fileData.url,
-    });
-  },
-
-  async updateAvatar(fileUrl) {
-    console.log("Mock updateAvatar:", fileUrl);
-    return Promise.resolve(fileUrl);
-  },
+// Get all profiles (with optional search)
+// queryParams is an object like { skill: 'painting', location: 'downtown' }
+const getAllProfiles = async (queryParams = {}) => {
+  const response = await apiClient.get('/profiles', { params: queryParams });
+  return response.data;
 };
+
+// Get a single profile by user ID
+const getProfileByUserId = async (userId) => {
+  const response = await apiClient.get(`/profiles/user/${userId}`);
+  return response.data;
+};
+
+// Get the profile for the currently logged-in user
+const getMyProfile = async () => {
+  const response = await apiClient.get('/profiles/me');
+  return response.data;
+};
+
+// Create or update the logged-in user's profile
+const createOrUpdateProfile = async (profileData) => {
+  const response = await apiClient.post('/profiles', profileData);
+  return response.data;
+};
+
+const profileApi = {
+  getAllProfiles,
+  getProfileByUserId,
+  getMyProfile,
+  createOrUpdateProfile,
+};
+
+export default profileApi;

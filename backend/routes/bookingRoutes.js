@@ -4,15 +4,15 @@ const router = express.Router();
 const { createBooking, getMyBookings, updateBookingStatus } = require('../controllers/bookingController');
 const { protect } = require('../middleware/authMiddleware');
 
-// All booking routes are protected
-router.use(protect);
+// --- PRIVATE ROUTES ---
 
-// GET /api/bookings/mybookings - Get all bookings for the logged-in user
-router.get('/mybookings', getMyBookings);
+// GET /api/bookings/mybookings - Must be logged in
+router.get('/mybookings', protect, getMyBookings);
 
-// POST /api/bookings/:providerId - Create a new booking with a specific provider
-router.post('/:providerId', createBooking);
+// POST /api/bookings/:providerId - Must be logged in to create a booking
+router.post('/:providerId', protect, createBooking);
 
-router.patch('/:id', updateBookingStatus);
+// PATCH /api/bookings/:id - Must be logged in to update a booking
+router.patch('/:id', protect, updateBookingStatus);
 
 module.exports = router;

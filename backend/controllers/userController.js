@@ -6,7 +6,8 @@ const generateToken = require('../utils/generateToken');
 // @route   POST /api/users/register
 // @access  Public
 const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  // --- ADD 'role' TO THE DESTRUCTURING ---
+  const { name, email, password, role } = req.body;
 
   try {
     if (!name || !email || !password) {
@@ -18,7 +19,13 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const user = await User.create({ name, email, password });
+    // --- PASS THE 'role' TO THE CREATE FUNCTION ---
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role, // If 'role' is undefined in the body, the model's default will be used
+    });
 
     if (user) {
       res.status(201).json({
@@ -35,6 +42,9 @@ const registerUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// ... (loginUser and getMe functions remain the same)
+
 
 // @desc    Authenticate a user (Login)
 // @route   POST /api/users/login
