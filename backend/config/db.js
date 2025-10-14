@@ -1,17 +1,18 @@
-// backend/config/db.js
 const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+    const mongoURI = process.env.MONGO_URI;
+    if (!mongoURI) throw new Error('MONGO_URI not found in .env file');
+
+    await mongoose.connect(mongoURI, {
+      serverSelectionTimeoutMS: 10000, // 10 seconds timeout
     });
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log('✅ Connected to MongoDB Atlas');
   } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1); // Exit with failure
+    console.error('❌ MongoDB connection error:', error.message);
+    process.exit(1);
   }
 };
 
