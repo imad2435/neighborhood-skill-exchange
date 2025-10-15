@@ -1,50 +1,93 @@
-import React, { useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchConversations, setActiveChat } from "../redux/messagesSlice";
-import ChatWindow from "../features/chatSystem/components/ChatWindow";
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  fetchConversations,
+  setActiveChat,
+  fetchMessagesForConversation,
+  addMessage,
+} from '../redux/messagesSlice';
+import socket from '../socket/socket';
+import ChatWindow from '../features/chatSystem/components/ChatWindow';
 
 export default function Messages() {
   const dispatch = useDispatch();
-  const { conversations, activeChatId, loading, error } = useSelector((s) => s.messages);
-  const activeChat = conversations.find((c) => c.id === activeChatId);
+  const {
+    conversations,
+    messagesByConversationId,
+    activeChatId,
+    status,
+    error,
+  } = useSelector((state) => state.messages);
+  
+  // Get the messages for the currently selected chat.
+  const activeChatMessages = messagesByConversationId[activeChatId] || [];
+  const activeConversation = conversations.find((c) => c._id === activeChatId);
 
+  // Fetch conversations on initial load and set up socket listener.
   useEffect(() => {
     dispatch(fetchConversations());
+
+    // Listen for 'receiveMessage' events from the server.
+    const handleReceiveMessage = (newMessage) => {
+      dispatch(addMessage(newMessage));
+    };
+    socket.on('receiveMessage', handleReceiveMessage);
+
+    // Clean up the listener when the component unmounts.
+    return () => {
+      socket.off('receiveMessage', handleReceiveMessage);
+    };
   }, [dispatch]);
 
+  // Handler for when a user clicks on a conversation in the sidebar.
+  const handleSelectChat = (chatId) => {
+    dispatch(setActiveChat(chatId));
+    // Tell the server we want to join this conversation's "room".
+    socket.emit('joinRoom', chatId);
+    // Fetch the message history for this conversation.
+    dispatch(fetchMessagesForConversation(chatId));
+  };
+
   return (
-    <div className="flex h-screen bg-purple-50">
-      {/* Sidebar */}
-      <aside className="w-1/3 min-w-[280px] border-r border-purple-300 bg-purple-100 overflow-y-auto">
-        <h2 className="text-xl font-bold p-4 border-b border-purple-300 text-purple-700">
+    <div className="flex h-[calc(100vh-4rem)] bg-gray-50"> {/* Adjust height for navbar */}
+      {/* Sidebar with conversation list */}
+      <aside className="w-1/3 min-w-[280px] border-r border-gray-200 bg-white flex flex-col">
+        <h2 className="text-xl font-bold p-4 border-b border-gray-200 text-gray-800">
           Messages
         </h2>
-
-        {loading && <p className="p-4 text-purple-400">Loading...</p>}
-        {error && <p className="p-4 text-red-500">{error}</p>}
-
-        {conversations.map((chat) => (
-          <div
-            key={chat.id}
-            onClick={() => dispatch(setActiveChat(chat.id))}
-            className={`p-4 cursor-pointer hover:bg-purple-200 transition rounded-r-lg ${
-              chat.id === activeChatId ? "bg-purple-300 font-semibold" : ""
-            }`}
-          >
-            <p className="text-purple-800">{chat.participants[1]}</p>
-            <p className="text-sm text-purple-600 truncate">
-              {chat.messages.at(-1)?.text || "No messages yet"}
-            </p>
-          </div>
-        ))}
+        <div className="overflow-y-auto">
+          {status === 'loading' && <p className="p-4 text-gray-500">Loading conversations...</p>}
+          {error && <p className="p-4 text-red-500">{error}</p>}
+          {conversations.map((convo) => {
+            // Find the other participant's name to display
+            const otherParticipant = convo.participants.find(p => p._id !== socket.userId); // This assumes you store userId on socket
+            return (
+              <div
+                key={convo._id}
+                onClick={() => handleSelectChat(convo._id)}
+                className={`p-4 cursor-pointer hover:bg-gray-100 transition ${
+                  convo._id === activeChatId ? 'bg-purple-100 font-semibold' : ''
+                }`}
+              >
+                <p className="text-gray-900">{otherParticipant?.name || 'Unknown User'}</p>
+                <p className="text-sm text-gray-500 truncate">
+                  {convo.lastMessage?.content || 'No messages yet'}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       </aside>
 
-      {/* Chat Window */}
+      {/* Main Chat Window Area */}
       <main className="flex-1">
-        {activeChat ? (
-          <ChatWindow chat={activeChat} />
+        {activeConversation ? (
+          <ChatWindow
+            conversation={activeConversation}
+            messages={activeChatMessages}
+          />
         ) : (
-          <div className="flex items-center justify-center h-full text-purple-400 font-medium">
+          <div className="flex items-center justify-center h-full text-gray-400 font-medium">
             Select a conversation to start chatting
           </div>
         )}

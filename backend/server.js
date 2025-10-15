@@ -1,70 +1,90 @@
+// --- 1. Core Module Imports ---
 const express = require('express');
+const http = require('http');
+const { Server } = require("socket.io");
 const dotenv = require('dotenv');
 const cors = require('cors');
+
+// --- 2. Custom Module Imports ---
 const connectDB = require('./config/db');
+// const { errorHandler } = require('./middleware/errorMiddleware');
+
+// Route imports
 const userRoutes = require('./routes/userRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
-const { errorHandler } = require('./middleware/errorMiddleware'); // Recommended for better error handling
+const conversationRoutes = require('./routes/conversationRoutes');
 
-// Load environment variables from .env file
+// Model imports for socket logic
+const Message = require('./models/messageModel');
+const Conversation = require('./models/conversationModel');
+
+
+// --- 3. Initial Configuration ---
 dotenv.config();
-
-// Connect to MongoDB database
 connectDB();
 
 const app = express();
-
-// --- Production-Ready CORS Configuration ---
-// This creates a "whitelist" of URLs that are allowed to make requests to your API.
-const allowedOrigins = [
-  'http://localhost:5173', // Your local frontend for development
-  // Add your Vercel/Netlify frontend URL here after you deploy it
-  // Example: 'https://ucds-neighborhood-platform.vercel.app' 
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or Postman)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    
-    return callback(null, true);
-  }
-}));
-// --- End CORS Configuration ---
+// IMPORTANT: Create the HTTP server from the Express app
+const server = http.createServer(app);
 
 
-// --- Core Middleware ---
-// This allows your server to accept and parse JSON in the body of requests.
+// --- 4. Express Middleware ---
+// Apply CORS and JSON parsing to the Express app.
+// Note: This CORS setup is for the REST API. Socket.IO has its own CORS config.
+app.use(cors());
 app.use(express.json());
 
 
-// --- API Routes ---
-// This is where you connect your different feature routes to the main app.
+// --- 5. API Routes ---
+// Mount all your REST API routes. These will have URLs like /api/users, /api/profiles, etc.
 app.use('/api/users', userRoutes);
-app.use('/api/profiles', profileRoutes); 
+app.use('/api/profiles', profileRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/conversations', conversationRoutes);
 
 
-// --- Simple Welcome Route ---
-// A basic route to confirm the server is running.
-app.get('/', (req, res) => {
-  res.send('Neighborhood Skill & Service Exchange API is running...');
+// --- 6. Socket.IO Configuration (The Real-time Part) ---
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173", // Must match your frontend URL
+    methods: ["GET", "POST"]
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('✅ SOCKET.IO: A user connected with socket ID:', socket.id);
+
+  socket.on('joinRoom', (conversationId) => {
+    socket.join(conversationId);
+    console.log(`SOCKET.IO: User ${socket.id} joined room: ${conversationId}`);
+  });
+
+  socket.on('sendMessage', async ({ conversationId, senderId, content }) => {
+    try {
+      const newMessage = await Message.create({ conversationId, sender: senderId, content });
+      await newMessage.populate('sender', 'name');
+      await Conversation.findByIdAndUpdate(conversationId, { lastMessage: newMessage._id });
+      // Broadcast the new message to all clients in the specific room
+      io.to(conversationId).emit('receiveMessage', newMessage);
+    } catch (error) {
+      console.error('SOCKET.IO Error (sendMessage):', error);
+      socket.emit('messageError', 'Failed to send message.');
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('❌ SOCKET.IO: User disconnected:', socket.id);
+  });
 });
 
 
-// --- Custom Error Handling Middleware ---
-// This should be the last piece of middleware. It catches errors from your controllers.
-app.use(errorHandler);
+// --- 7. Final Middleware and Server Start ---
+// Custom error handler for the REST API (must be last)
+// app.use(errorHandler);
 
-
-// --- Server Initialization ---
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5001;
+// CRITICAL: You must listen on the 'server' variable, not the 'app' variable.
+server.listen(PORT, () => console.log(`🚀 HTTP Server (with Socket.IO) running on port ${PORT}`));

@@ -39,10 +39,13 @@ const Navbar = () => {
             {user ? (
               // --- If user is logged in ---
               <>
+                <Link to="/messages" className="text-gray-700 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium">
+                  Messages
+                </Link>
                 <span className="text-gray-800 mr-4">Welcome, {user.name}!</span>
                 <Link to="/dashboard" className="text-gray-700 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium">
-    Dashboard
-  </Link>
+               Dashboard
+                </Link>
                 <Link to="/profile" className="text-gray-700 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium">
                   My Profile
                 </Link>
