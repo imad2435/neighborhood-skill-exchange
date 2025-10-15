@@ -1,75 +1,88 @@
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { messagesApi } from '../api/messagesApi';
 
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-//import { messagesApi } from "../api/messagesApi";
-
-import { mockMessagesApi } from "../api/mockMessagesApi";//mock Data
-
-const api = mockMessagesApi; // replace with messagesApi when backend is ready
-
-
+// Async thunk to fetch the list of conversations for the sidebar.
 export const fetchConversations = createAsyncThunk(
-  "messages/fetchConversations",
+  'messages/fetchConversations',
   async (_, { rejectWithValue }) => {
     try {
-      return await api.getConversations();
+      return await messagesApi.getConversations();
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to fetch conversations");
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch conversations');
     }
   }
 );
 
-export const sendMessageAsync = createAsyncThunk(
-  "messages/sendMessage",
-  async ({ chatId, sender, text }, { rejectWithValue }) => {
+// Async thunk to fetch the message history for a selected conversation.
+export const fetchMessagesForConversation = createAsyncThunk(
+  'messages/fetchMessages',
+  async (conversationId, { rejectWithValue }) => {
     try {
-      const message = {
-        senderId: sender,
-        text,
-        time: new Date().toISOString(),
-      };
-      const res = await api.sendMessage(chatId, message);
-      return { chatId, message: res };
+      const messages = await messagesApi.getMessagesForConversation(conversationId);
+      // Return both the messages and the ID so we know where to store them.
+      return { conversationId, messages };
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Failed to send message");
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch messages');
     }
   }
 );
+export const createOrGetConversationAsync = createAsyncThunk(
+  'messages/createOrGetConversation',
+  async (receiverId, { rejectWithValue }) => {
+    try {
+      const conversation = await messagesApi.createOrGetConversation(receiverId);
+      return conversation;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to start conversation');
+    }
+  }
+)
 
-// --- Slice ---
 const messagesSlice = createSlice({
-  name: "messages",
+  name: 'messages',
   initialState: {
     conversations: [],
+    messagesByConversationId: {}, // Stores message history, e.g., { 'convo123': [...] }
     activeChatId: null,
-    loading: false,
+    status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
     error: null,
   },
   reducers: {
+    // Sets the currently active chat in the UI.
     setActiveChat: (state, action) => {
       state.activeChatId = action.payload;
+    },
+    // This reducer is called when a new message arrives from the socket.
+    addMessage: (state, action) => {
+      const message = action.payload;
+      const { conversationId } = message;
+      // Add the new message to the correct conversation's message history.
+      if (state.messagesByConversationId[conversationId]) {
+        state.messagesByConversationId[conversationId].push(message);
+      }
     },
   },
   extraReducers: (builder) => {
     builder
+      // Reducers for fetching the conversation list
       .addCase(fetchConversations.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.status = 'loading';
       })
       .addCase(fetchConversations.fulfilled, (state, action) => {
-        state.loading = false;
+        state.status = 'succeeded';
         state.conversations = action.payload;
       })
       .addCase(fetchConversations.rejected, (state, action) => {
-        state.loading = false;
+        state.status = 'failed';
         state.error = action.payload;
       })
-      .addCase(sendMessageAsync.fulfilled, (state, action) => {
-        const { chatId, message } = action.payload;
-        const chat = state.conversations.find((c) => c.id === chatId);
-        if (chat) chat.messages.push(message);
+      // Reducers for fetching a conversation's message history
+      .addCase(fetchMessagesForConversation.fulfilled, (state, action) => {
+        const { conversationId, messages } = action.payload;
+        state.messagesByConversationId[conversationId] = messages;
       });
   },
 });
 
-export const { setActiveChat } = messagesSlice.actions;
+export const { setActiveChat, addMessage } = messagesSlice.actions;
 export default messagesSlice.reducer;

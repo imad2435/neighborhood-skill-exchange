@@ -5,6 +5,8 @@ import profileApi from '../api/profileApi';
 import reviewsApi from '../api/reviewsApi';
 import bookingApi from '../api/bookingApi';
 import BookingModal from '../components/BookingModal';
+import { useDispatch } from 'react-redux'; // <-- 1. Import useDispatch
+import { createOrGetConversationAsync } from '../redux/messagesSlice';
 
 const ProviderDetailPage = () => {
   const { userId } = useParams();
@@ -16,6 +18,7 @@ const ProviderDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+   const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -50,6 +53,29 @@ const ProviderDetailPage = () => {
       }
     }
   };
+   // --- 4. CREATE THE HANDLER FUNCTION ---
+  const handleStartChat = async () => {
+    if (!user) {
+      alert('Please log in to start a chat.');
+      navigate('/login');
+      return;
+    }
+    
+    // Don't let a user chat with themselves
+    if (user._id === userId) {
+      alert("You cannot start a chat with yourself.");
+      return;
+    }
+
+    try {
+      // Dispatch the action to create/get the conversation
+      await dispatch(createOrGetConversationAsync(userId)).unwrap();
+      // On success, redirect to the messages page
+      navigate('/messages');
+    } catch (error) {
+      alert(`Could not start chat: ${error}`);
+    }
+  };
 
   const handleRequestToBookClick = () => {
     if (user) {
@@ -81,6 +107,8 @@ const ProviderDetailPage = () => {
   if (!profile) {
     return <div className="text-center p-10 text-lg">Provider not found.</div>;
   }
+
+  
 
   // --- MAIN RENDER ---
   // If the code reaches this point, we are guaranteed that 'profile' is a valid object.
@@ -124,6 +152,13 @@ const ProviderDetailPage = () => {
               >
                 Request to Book
               </button>
+              <button
+                onClick={handleStartChat}
+                className="w-full mt-4 bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-lg hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+              >
+                Start Chat
+              </button> {/* --- 5. ADD THE BUTTON --- */}
+               
               <p className="text-xs text-gray-500 text-center mt-2">You won't be charged yet</p>
             </div>
           </div>

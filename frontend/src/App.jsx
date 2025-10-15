@@ -1,30 +1,40 @@
-// frontend/src/App.jsx
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
+import socket from './socket/socket';
 
-// Import Layout Component
+// Import Layout & Page Components
 import Layout from './components/Layout';
-
-// Import Page Components
-import HomePage from './pages/HomePage'; // <-- IMPORT
+import HomePage from './pages/HomePage';
+import ProvidersListPage from './pages/ProvidersListPage';
+import ProviderDetailPage from './pages/ProviderDetailPage';
+import DashboardPage from './pages/DashboardPage';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import Messages from './pages/Messages';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
-import ProvidersListPage from './pages/ProvidersListPage';
-import ProviderDetailPage from './pages/ProviderDetailPage';
-import DashboardPage from './pages/DashboardPage';
 
 function App() {
+  const { user } = useAuth(); // Get the current logged-in user
+
+  // This effect handles connecting and disconnecting the socket based on login status.
+  useEffect(() => {
+    if (user) {
+      // If a user is logged in, connect the socket.
+      socket.connect();
+    }
+
+    // This is a cleanup function. It runs when the user logs out or the app closes.
+    return () => {
+      socket.disconnect();
+    };
+  }, [user]); // This dependency array ensures the effect re-runs whenever the user state changes.
+
   return (
     <Routes>
       {/* --- Main Application Routes (with Navbar) --- */}
-      
-      {/* The new Homepage is now the main entry point */}
       <Route path="/" element={<Layout><HomePage /></Layout>} />
-      
       <Route path="/providers" element={<Layout><ProvidersListPage /></Layout>} />
       <Route path="/provider/:userId" element={<Layout><ProviderDetailPage /></Layout>} />
       <Route path="/dashboard" element={<Layout><DashboardPage /></Layout>} />
@@ -37,7 +47,6 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
 
       {/* --- Fallback Route --- */}
-      {/* If no other route matches, redirect to the homepage */}
       <Route path="*" element={<Layout><HomePage /></Layout>} />
     </Routes>
   );
